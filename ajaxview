@@ -1,0 +1,74 @@
+<?php 
+use yii\helpers\Html;
+use yii\bootstrap\ActiveForm;
+$form=ActiveForm::begin();
+?>
+<div class="alert alert-danger" id="namealert" style="display:none;">Name already exist.</div>
+<?= $form->field($student,'name')->textInput(['id'=>'name']) ?>
+<?= $form->field($student,'last_name')->textInput()?>
+<?= $form->field($student,'email')->input('email')?>
+<?= Html::submitButton("Submit",['class'=>'btn btn-success']);?>
+<div class="alert alert-danger" id="formalert" style="display:none;">
+Form cannot submit due to incorrect detail.
+</div>
+<?php ActiveForm::end();
+$this->registerJs("
+	$(document).ready(function(){
+		var name;
+		$('form').submit(function(event){
+			event.preventDefault();
+			if(name==1)
+			{
+				$('#formalert').show();
+				$('#formalert').fadeOut(3000);
+			}
+			else
+			{
+			}
+			
+		});
+		
+		$('#name').blur(
+			function()
+			{
+				if($('#name').val()=='')
+				{
+					console.log('email cannot be empty');
+				}
+				else
+				{
+					console.log('name'+$('#name').val());
+					$.ajax
+					({
+						url:'/index.php?site/Checkusername&name='+$('#name').val(),
+						async:true,
+						type:'post',
+						success:function(success)
+						{
+							console.log('In name blur,In success');
+							console.log(success);
+							if(success=='in if 1')
+							{
+								name=1;
+								console.log('flag 1 is set');
+								$('#namealert').show();
+							}
+							else
+							{
+								name=0;
+								console.log('flag 0 is set');
+								$('#namealert').hide();
+							}
+						},
+						error:function(success)
+						{
+							console.log('In name blur,In error');
+							console.log(success);
+						}
+					})
+				}
+			}
+		);
+	});
+");
+?>
