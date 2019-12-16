@@ -16,6 +16,12 @@ use frontend\models\SignupForm;
 use frontend\models\ContactForm;
 use frontend\models\PaymentForm;
 use frontend\models\Checkout2Form;
+use frontend\models\FileUploadForm;	
+use yii\web\UploadedFile;
+use frontend\models\EmailForm;
+use frontend\models\SmsForm;
+use frontend\models\HiForm;
+use frontend\models\SmsTemplateForm;
 /**
  * Site controller
  */
@@ -24,6 +30,8 @@ class SiteController extends Controller
     /**
      * {@inheritdoc}
      */
+	//public $defaultAction="smsform";
+	
     public function behaviors()
     {
         return [
@@ -365,5 +373,128 @@ class SiteController extends Controller
 		    $count+=2; 
         	} 
   	        return $binString; 
-    	  } 
+    	  }
+	public function actionFileupload()
+	{
+		$con=Yii::$app->getDb();
+		$model=new FileUploadForm();
+		if($model->load(Yii::$app->request->post()))
+		{
+			$name="file";
+			/*
+			$model->img=UploadedFile::getInstance($model,'img');
+			$model->img->saveAs('upload/'.$name.'.'.$model->img->extension);
+			*/
+			$files=UploadedFile::getInstances($model,'img');
+			$i=0;
+			$model->date_of_upload=date("Y-m-d");// date of upload
+			
+			$con->createCommand('insert into inward 
+			(invoice_number,invoice_date,date_of_upload,server_name)
+			values('.$model->invoice_number.',"'.$model->invoice_date.'",
+			"'.$model->date_of_upload.'","'.$model->server_name.'")')->execute();
+			
+			$sql='SELECT id from inward where invoice_number='.$model->invoice_number;
+			echo 'query='.$sql.'<br>';
+			$db=$con->createCommand($sql)->queryOne();
+			var_dump($db);
+			$server='';
+			switch($model->server_name)
+			{
+				case 'goldfinch':
+				$server='goldfinch';
+				break;
+						
+				case 'petaltouch':
+				$server='petaltouch';
+				break;
+						
+				case 'devparlour':
+				$server='devparlour';
+				break;
+						
+				case 'combparlour':
+				$server='combparlour';
+				break;
+						
+				case 'btanish':
+				$server='btanish';
+				break;
+			}
+			$path1='upload/'.$server.'/'.$db['id'].'/';
+			
+			if(file_exists($path))
+			{
+				
+			}
+			else
+			{
+			mkdir($path1);
+			}
+			foreach($files as $file)
+			{
+				if($file!==null)
+				{
+					echo $db['id'];
+					$i++;//file numbering.
+					//missing inward.
+					$path=$path1.$i.'_'.$file->name;//.'.'.$file->extension;
+					echo $path.'<br>';
+					
+					$con->createCommand('insert into inward_details
+					(inward_id,img_path)
+					values('.$db['id'].',"'.$path.'")')
+					->execute();
+					
+					$file->saveAs($path);
+				}
+			}
+			Yii::$app->session->setFlash('success',
+			"File has been successfully uploaded");
+		}
+		return $this->render('file_upload',['model'=>$model]);
+	}
+	public function actionSendemail()
+	{
+		$model=new EmailForm();
+		if($model->load(Yii::$app->request->post()))
+		{
+			$model->save();
+			return $this->render('view_email',['model'=>$model]);
+		}
+		else
+		{
+			return $this->render('sendemail',['model'=>$model]);
+		}
+	}
+	public function actionSmsform()
+	{
+		$sms=new SmsTemplateForm();
+		if($sms->load(Yii::$app->request->post()))
+		{
+			$db=Yii::$app->getDb();
+			$db->createCommand('insert into ');
+		}
+		else
+		{
+			return $this->render('smsform',['sms'=>$sms]);
+		}
+	}
+	public function actionHi()
+	{
+		$hi=new HiForm();
+		if($hi->load(Yii::$app->request->post()))
+		{
+			var_dump($hi);
+			exit;
+		}
+		else
+		{
+			return $this->render('hi',['hi'=>$hi]);
+		}
+	}
+	public function actionDynamic()
+	{
+		return $this->render('dynamic_form');
+	}
 }
